@@ -30,6 +30,8 @@ class ChordBox {
         fontStyle: 'light',
         fontWeight: '100',
         labelWeight: '100',
+        background:'#ffad35',
+        stringColor:[]
       },
       ...params,
     };
@@ -71,7 +73,7 @@ class ChordBox {
       barreRadius: this.width / 25,
       fontSize: this.params.fontSize || Math.ceil(this.width / 8),
       barShiftX: this.width / 28,
-      bridgeStrokeWidth: Math.ceil(this.height / 36),
+      bridgeStrokeWidth:this.params.bridgeStrokeWidth ? this.params.bridgeStrokeWidth :Math.ceil(this.height / 36),
     };
 
     // Content
@@ -132,6 +134,21 @@ class ChordBox {
     const { spacing } = this;
     const { fretSpacing } = this;
 
+    
+    // Draw fretboard
+    if (this.position <= 1) {
+      const fromX = this.x; 
+      const fromY = this.y//+// this.params.height;
+      this.canvas
+        .rect(this.x + spacing * (this.numStrings - 1) - fromX, this.height * 0.85 )
+        .move(fromX, fromY)
+        .stroke({ width: 0 })
+        .fill(this.params.background);
+    } else {
+      // Draw position number
+    //  this.drawText(this.x - this.spacing / 2 - this.spacing * 0.1, this.y + this.fretSpacing * this.positionText, this.position);
+    }
+    
     // Draw guitar bridge
     if (this.position <= 1) {
       const fromX = this.x;
@@ -150,7 +167,9 @@ class ChordBox {
     for (let i = 0; i < this.numStrings; i += 1) {
       this.drawLine(this.x + spacing * i, this.y, this.x + spacing * i, this.y + fretSpacing * this.numFrets).stroke({
         width: this.params.stringWidth.length ? this.params.stringWidth[i%this.params.stringWidth.length]:this.params.stringWidth,
-        color: this.params.stringColor.length ? this.params.stringColor[i%this.params.stringColor.length]:this.params.stringColor,
+        color: this.params.stringColor.length ? 
+        this.params.stringColor[i%this.params.stringColor.length]: 
+       ( this.params.stringColor?this.params.stringColor:"black")
       });
     }
 
@@ -176,6 +195,7 @@ class ChordBox {
         string: this.chord[i][0],
         fret: this.chord[i][1],
         label: this.chord.length > 2 ? this.chord[i][2] : undefined,
+        index:i
       });
     }
 
@@ -185,7 +205,7 @@ class ChordBox {
     }
   }
 
-  lightUp({ string, fret, label }) {
+  lightUp({ string, fret, label, index }) {
     const stringNum = this.numStrings - string;
     const shiftPosition = this.position === 1 && this.positionText === 1 ? this.positionText : 0;
 
@@ -203,26 +223,36 @@ class ChordBox {
       this.canvas
         .circle()
         .move(x, y - this.fretSpacing / 2)
-        .radius(this.metrics.circleRadius)
-        .stroke({ color: this.params.strokeColor, width: this.params.strokeWidth })
-        .fill(fretNum > 0 ? this.params.strokeColor : this.params.bgColor);
+        .radius(this.params.circleRadius)
+        .stroke(this.params.strokeBorder.length? this.params.strokeBorder[index%this.params.strokeBorder.length] : this.params.strokeBorder)
+        .fill(this.params.strokeColor.length? this.params.strokeColor[index%this.params.strokeColor.length] : this.params.strokeColor);
     } else {
       this.drawText(x, y - this.fretSpacing, 'X');
     }
 
     if (label) {
+      
+      console.log(label)
       const fontSize = this.metrics.fontSize * 0.55;
       const textYShift = fontSize * 0.66;
-      this.drawText(x, y - this.fretSpacing / 2 - textYShift, label, {
-        weight: this.params.labelWeight,
-        size: fontSize,
-      })
-        .stroke({
-          width: 0.7,
-          color: fretNum !== 0 ? this.params.labelColor : this.params.strokeColor,
-        })
-        .fill(fretNum !== 0 ? this.params.labelColor : this.params.strokeColor);
-    }
+     
+   
+      // Draw strings
+     // for (let i = 0; i < label; i += 1) {
+        this.drawText(x, y - this.fretSpacing / 2 - textYShift, label, {
+          weight: this.params.labelWeight,
+          size: fontSize
+          }).stroke({
+          
+          width:  0.7,//this.params.stringWidth.length ? this.params.stringWidth[i%this.params.stringWidth.length]:this.params.stringWidth,
+          color: this.params.labelColor.length ? this.params.labelColor[index%this.params.labelColor.length]:this.params.labelColor,
+  
+     })
+     .fill(fretNum !== 0 ? this.params.labelColor : this.params.strokeColor);
+
+    //  }
+   
+      }
 
     return this;
   }
