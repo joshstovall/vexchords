@@ -5,12 +5,13 @@
 
 import { SVG } from '@svgdotjs/svg.js';
 
-// ChordBox implements the rendering logic for the chord
-// diagrams.
+// ChordBox implements the rendering logic for the chord diagrams.
 class ChordBox {
   // sel can be a selector or an element.
-  constructor(sel, params) {
+  constructor(sel, params) { 
     this.sel = sel;
+
+    console.log(params)
     this.params = {
       ...{
         numStrings: 6,
@@ -45,21 +46,25 @@ class ChordBox {
     // Create canvas and add it to the DOM
     this.canvas = SVG()
       .addTo(sel)
-      .size(this.params.width, this.params.height);
+      .size(this.params.width, this.params.height)
+      .viewbox(0, 0, this.params.width, this.params.height);
 
     // Size and shift board
     this.width = this.params.width * 0.75;
     this.height = this.params.height * 0.75;
+    this.x = this.params.x + this.params.width * 0.15;
+    this.y = this.params.y + this.params.height * 0.15;
 
-    // Initialize scaled-spacing
     this.numStrings = this.params.numStrings;
     this.numFrets = this.params.numFrets;
+
+    // Initialize scaled-spacing
     this.spacing = this.width / this.numStrings;
     this.fretSpacing = this.height / (this.numFrets + 2);
 
     // Add room on sides for finger positions on 1. and 6. string
-    this.x = this.params.x + this.params.width * 0.15 + this.spacing / 2;
-    this.y = this.params.y + this.params.height * 0.15 + this.fretSpacing;
+    this.x += this.spacing / 2;
+    this.y += this.fretSpacing;
 
     this.metrics = {
       circleRadius: this.width / 20,
@@ -73,8 +78,19 @@ class ChordBox {
     this.position = 0;
     this.positionText = 0;
     this.chord = [];
-    this.barres = [];
+    this.bars = [];
     this.tuning = ['E', 'A', 'D', 'G', 'B', 'E'];
+  }
+
+  setNumFrets(numFrets) {
+    this.numFrets = numFrets;
+    this.fretSpacing = this.height / (this.numFrets + 1);
+    return this;
+  }
+
+  setPositionText(position) {
+    this.positionText = position;
+    return this;
   }
 
   drawText(x, y, msg, attrs) {
@@ -133,16 +149,16 @@ class ChordBox {
     // Draw strings
     for (let i = 0; i < this.numStrings; i += 1) {
       this.drawLine(this.x + spacing * i, this.y, this.x + spacing * i, this.y + fretSpacing * this.numFrets).stroke({
-        width: this.params.stringWidth,
-        color: this.params.stringColor,
+        width: this.params.stringWidth.length ? this.params.stringWidth[i%this.params.stringWidth.length]:this.params.stringWidth,
+        color: this.params.stringColor.length ? this.params.stringColor[i%this.params.stringColor.length]:this.params.stringColor,
       });
     }
 
     // Draw frets
     for (let i = 0; i < this.numFrets + 1; i += 1) {
       this.drawLine(this.x, this.y + fretSpacing * i, this.x + spacing * (this.numStrings - 1), this.y + fretSpacing * i).stroke({
-        width: this.params.fretWidth,
-        color: this.params.fretColor,
+        width: this.params.fretWidth.length ? this.params.fretWidth[i%this.params.fretWidth.length]:this.params.fretWidth,
+        color: this.params.fretColor.length ? this.params.fretColor[i%this.params.fretColor.length]:this.params.fretColor,
       });
     }
 
@@ -187,7 +203,7 @@ class ChordBox {
       this.canvas
         .circle()
         .move(x, y - this.fretSpacing / 2)
-        .radius(this.params.circleRadius || this.metrics.circleRadius)
+        .radius(this.metrics.circleRadius)
         .stroke({ color: this.params.strokeColor, width: this.params.strokeWidth })
         .fill(fretNum > 0 ? this.params.strokeColor : this.params.bgColor);
     } else {
